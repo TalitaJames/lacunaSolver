@@ -28,8 +28,11 @@ def cropToCircle(img):
     
     return croppedImg
 
+def hsvColorFilterTupple(img, colorStats: tuple):
+    hue_range, saturation, value = colorStats
+    return hsvColorFilter(img, hue_range, saturation, value)
 
-def hsvColorFilter(img, hue_range, saturation, value):
+def hsvColorFilter(img, hue_range: list, saturation: float, value: float):
     '''Takes an image, filters it by some colour [hue_min, hue_max] and saturation, value (all as decimals 0-1)'''
     # Convert the to HSV color
     hsv_image = cv.cvtColor(img, cv.COLOR_BGR2HSV)
@@ -58,3 +61,7 @@ if __name__ == "__main__":
 
     cropped_img = cropToCircle(img)
     cv.imwrite('out/progress/cropped_image.jpg', cropped_img)
+
+    colourRangeAqua = ([172/255, 182/255], statistics.mean([31,33,39,26, 42])/255, statistics.mean([79,79,73, 74,76])/255)
+    lacunaFilteredOne = hsvColorFilterTupple(img, colourRangeAqua)
+    cv.imwrite('out/progress/hsv_image_aqua.jpg', lacunaFilteredOne)
