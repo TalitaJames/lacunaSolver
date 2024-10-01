@@ -1,7 +1,6 @@
 # Folders:
 out/*
 images/*
-matlab/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
