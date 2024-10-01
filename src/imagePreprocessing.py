@@ -1,7 +1,7 @@
 import cv2 as cv
 import numpy as np
 
-def crop_to_circle(img):
+def cropToCircle(img):
     '''Given an image of Lacuna, return the image masked to only show the inside play circle'''
     # Convert the image to grayscale
     imgGS = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -28,9 +28,33 @@ def crop_to_circle(img):
     
     return croppedImg
 
+
+def hsvColorFilter(img, hue_range, saturation, value):
+    '''Takes an image, filters it by some colour [hue_min, hue_max] and saturation, value (all as decimals 0-1)'''
+    # Convert the to HSV color
+    hsv_image = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+
+    # Split the HSV channels
+    hue_channel, saturation_channel, value_channel = cv.split(hsv_image)
+
+    # Normalize the hue range from [0, 1] to [0, 180] for OpenCV's HSV range
+    hue_min = int(hue_range[0] * 180)
+    hue_max = int(hue_range[1] * 180)
+
+    # Create the mask for the color range
+    colour_mask = (hue_channel >= hue_min) & (hue_channel <= hue_max) & \
+                  (saturation_channel >= saturation * 255) & (value_channel >= value * 255)
+
+    # Set pixels outside the mask to black
+    filtered_img = np.copy(img)
+    filtered_img[~colour_mask] = 0
+
+    return filtered_img
+
+
 if __name__ == "__main__":
     # Usage example:
     img = cv.imread('images/001.jpg')
 
-    cropped_img = crop_to_circle(img)
+    cropped_img = cropToCircle(img)
     cv.imwrite('out/progress/cropped_image.jpg', cropped_img)
