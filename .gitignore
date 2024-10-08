@@ -1,5 +1,5 @@
 # Folders:
-out/*
+out/logs/*
 images/training_data/*
 
 # Byte-compiled / optimized / DLL files
@@ -28,12 +28,3 @@ cover/
 # IPython
 profile_default/
 ipython_config.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
