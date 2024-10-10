@@ -1,10 +1,23 @@
+'''
+Made By: Talita James
+Last Edited: 2024-10
+
+This code interacts with a "Board" of lacuna tiles.
+A token is a tupple of the form (x,y,type)
+- Where type is the integer representing 0-6 its colour
+
+Notes:
+Its unlikely the token list will stay exact each time the CV algorithm runs
+'''
+
 import random
 import math
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import Voronoi, voronoi_plot_2d
-
-
+import networkx as nx
+import time
+import itertools
 
 #given an int, return a string colour
 def getColor(color):
@@ -32,11 +45,16 @@ def getColor(color):
 
 class Board:
     def __init__(self, tokenList, userMoves = None, radius = 0.5):
-        self.tokenCount = 7 # there are x of each token, in x types
+        '''Create a board'''
+
+        self.tokenCount = int(math.sqrt(len(tokenList))) # there are x of each token, in x types
         self.radius = radius # Used for plotting only
 
-        self.tokenList_initial = tokenList # Where all the game pices were at the start
-        self.tokenList_active = tokenList # Where all the game pieces are now
+        self.tokenGraph = nx.Graph()
+        self.tokenGraph.add_nodes_from(tokenList)
+
+        # self.tokenList_initial = tokenList # Where all the game pices were at the start
+        # self.tokenList_active = tokenList # Where all the game pieces are now
 
         # user data
         self.userMoves = userMoves
@@ -50,8 +68,21 @@ class Board:
 
     # Calculate game features
     def findPotentialMoves(self):
-        '''Analyse the active tokens and return a list of moves'''
-        pass
+        '''Analyse the active tokens and return a list of all valid moves'''
+        # Attach an edge to each node of the same colour:
+        for i in range(self.tokenCount):
+            nodeIDs = [node for node, atribute in self.tokenGraph.nodes().items() if atribute['type'] == i]
+            edges = itertools.combinations(nodeIDs, 2)
+            self.tokenGraph.add_edges_from(edges)
+
+        # Check if the node is uninterupted colliniar (aka valid)
+        for edge in self.tokenGraph.edges:
+            # the position of each node (x,y)
+            nodeA_pos = self.tokenGraph.nodes[edge[0]]['pos']
+            nodeB_pos = self.tokenGraph.nodes[edge[1]]['pos']
+            if not(edge[0]%2==0): #collinear(nodeA_pos, nodeB_pos)): #TODO implement "is collinear"
+                print(f"Removed edge {edge}")
+                self.tokenGraph.remove_edge(*edge)
 
     def calculateWinner(self) -> int:
         '''return the game winner, either player 1 or 2. 
@@ -59,60 +90,61 @@ class Board:
         pass
 
     # Display, visualisation methods
+    def getGraph(self):
+        return self.tokenGraph
+
     def viewBoard(self):
-        # Draw voranoi diagram and user moves
-        if self.userMoves is not None:
-            pointsXY = np.array([[x, y] for x,y,i in self.userMoves])
-            v = Voronoi(pointsXY)
-            voronoi_plot_2d(v)
+        # # Draw voranoi diagram and user moves
+        # if self.userMoves is not None:
+        #     pointsXY = np.array([[x, y] for x,y,i in self.userMoves])
+        #     v = Voronoi(pointsXY)
+        #     voronoi_plot_2d(v)
 
-        # Add tokens
-        for t in self.tokenList:
-            plt.plot(t[0], t[1], color=getColor(t[2]), marker='x')
+        # # Add tokens
+        # for t in self.tokenList:
+        #     plt.plot(t[0], t[1], color=getColor(t[2]), marker='x')
         
-        boardCircle = plt.Circle((0, 0), self.radius, color='k', fill=False, linewidth=1, linestyle='-' )
-        plt.gca().add_patch(boardCircle)
+        # boardCircle = plt.Circle((0, 0), self.radius, color='k', fill=False, linewidth=1, linestyle='-' )
+        # plt.gca().add_patch(boardCircle)
 
-        plt.title("Lacuna Image")
-        plt.gca().set_aspect('equal')
+        # plt.title("Lacuna Image")
+        # plt.gca().set_aspect('equal')
 
-        ax = plt.gca()
-        ax.set_xlim([-(self.radius+0.05), (self.radius+0.05)])
-        ax.set_ylim([-(self.radius+0.05), (self.radius+0.05)])
-
+        # ax = plt.gca()
+        # ax.set_xlim([-(self.radius+0.05), (self.radius+0.05)])
+        # ax.set_ylim([-(self.radius+0.05), (self.radius+0.05)])
+        
+        nx.draw(self.tokenGraph)  # networkx draw()
+        plt.draw()  # pyplot draw()
         plt.show()
 
 
-
 # Methods to process the image and create a board
-def newBoard(filename):
-    pass
 
 # new Board with random data
-def newBoard(size = 7, radius=0.50):
+def newRandomBoard(size = 7, radius=0.50):
+    '''Get a list of complete rangomly generated tokens '''
     tokenList = []
     for i in range(size): # how many colours
-        for _ in range(size): # how many of each colour
+        for j in range(size): # how many of each colour
             inCircle = False
 
             while not inCircle:
-                x = random.uniform(-radius, radius)
-                y = random.uniform(-radius, radius)
+                x = round(random.uniform(-radius, radius),3)
+                y = round(random.uniform(-radius, radius),3)
                 
                 inCircle = radius > math.sqrt(math.pow(x,2) + math.pow(y,2))
 
-            tokenList.append([x,y,i])
-
+            nodeAttribute = {"pos": (x,y), "type": i}
+            newData=(i*size+j, nodeAttribute)
+            tokenList.append(newData)
     return tokenList
 
 
-
-
-
-
 if __name__ == "__main__":
-    radius = 0.5
-    tokens = newBoard()
+    print("-----\n")
+    timestamp = time.strftime("%Y%m%d-%H%M%S",time.localtime())
 
+    tokens = newRandomBoard()
     board = Board(tokens)
     board.viewBoard()
