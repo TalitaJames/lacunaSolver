@@ -7,6 +7,11 @@ This project compares three CV approaches of template matching, colour manipulat
 [reddit strategy discussion from game designer](https://www.reddit.com/r/boardgames/comments/187cqiu/lacuna/)
 [an hour of lacuna footage](https://www.youtube.com/watch?v=_wDohO9mW5E)
 
+## Formats
+A "token" is a flower (note that the user placments aren't included)  stored as a dictionary with the form **`{"pos": (x,y), "type": color}`**
+- `pos` is the position, as an `(x,y)` tupple
+- `color` is an `int` (0 thru 6) representing which color the token is (we don't need to represent them as a string, `int` is easier)
+
 ## Tasks
 
 ### Circle cropping
