@@ -69,20 +69,50 @@ class Board:
     # Calculate game features
     def findPotentialMoves(self):
         '''Analyse the active tokens and return a list of all valid moves'''
+
         # Attach an edge to each node of the same colour:
         for i in range(self.tokenCount):
             nodeIDs = [node for node, atribute in self.tokenGraph.nodes().items() if atribute['type'] == i]
             edges = itertools.combinations(nodeIDs, 2)
             self.tokenGraph.add_edges_from(edges)
 
+        # Sort nodes by x,y
+        # then check which is smaller (x or y)
+        # then check nodes in the the x1 to x2 range (or y if smaller)
+        # if nodes intersect
+        # get list [x sort]
+        # get y then pick
+
         # Check if the node is uninterupted colliniar (aka valid)
         for edge in self.tokenGraph.edges:
+            collision = False
             # the position of each node (x,y)
-            nodeA_pos = self.tokenGraph.nodes[edge[0]]['pos']
-            nodeB_pos = self.tokenGraph.nodes[edge[1]]['pos']
-            if not(edge[0]%2==0): #collinear(nodeA_pos, nodeB_pos)): #TODO implement "is collinear"
-                print(f"Removed edge {edge}")
-                self.tokenGraph.remove_edge(*edge)
+            (x1,y1) = self.tokenGraph.nodes[edge[0]]['pos']
+            (x2,y2) = self.tokenGraph.nodes[edge[1]]['pos']
+
+            # Brute force, check all nodes approach:
+            m = (y2-y1)/(x2-x1)
+            c = (y1-m*x1)
+
+            print(f"checking edge {edge} at ({x1},{y1}), ({x2},{y2})")
+            for node, attribute in self.tokenGraph.nodes().items():            #TODO implement "is collinear"
+                (xn,yn) = attribute['pos']
+                # print(f"checking edge {edge} at ({x1},{y1}) and ({x2},{y2}) compared to node ({xn},{yn})")
+
+                if node in edge:
+                    print(f"skipped self")
+                    continue
+
+                print(f"({xn},{yn})")
+                lineformula = abs(m*xn+c-yn)
+
+                if(min(x1,x2) <= xn <= max(x1,x2) and min(y1,y2) <= yn <= max(y1,y2) and lineformula <= 0.04):
+                    # print(f"\tRemoved edge {edge}")
+                    self.tokenGraph.remove_edge(*edge)
+                    collision = True
+                    break
+            print(f"\tKept edge {edge}") if not collision else ""
+
 
     def calculateWinner(self) -> int:
         '''return the game winner, either player 1 or 2. 
@@ -132,7 +162,7 @@ def newRandomBoard(size = 7, radius=0.50):
             while not inCircle:
                 x = round(random.uniform(-radius, radius),3)
                 y = round(random.uniform(-radius, radius),3)
-                
+
                 inCircle = radius > math.sqrt(math.pow(x,2) + math.pow(y,2))
 
             nodeAttribute = {"pos": (x,y), "type": i}
@@ -147,4 +177,5 @@ if __name__ == "__main__":
 
     tokens = newRandomBoard()
     board = Board(tokens)
-    board.viewBoard()
+    board.findPotentialMoves()
+    # board.viewBoard()
