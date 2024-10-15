@@ -1,5 +1,6 @@
 import cv2 as cv
 import numpy as np
+import statistics
 
 def cropToCircle(img):
     '''Given an image of Lacuna, return the image masked to only show the inside play circle'''
@@ -32,36 +33,29 @@ def hsvColorFilterTupple(img, colorStats: tuple):
     hue_range, saturation, value = colorStats
     return hsvColorFilter(img, hue_range, saturation, value)
 
-def hsvColorFilter(img, hue_range: list, saturation: float, value: float):
-    '''Takes an image, filters it by some colour [hue_min, hue_max] and saturation, value (all as decimals 0-1)'''
-    # Convert the to HSV color
-    hsv_image = cv.cvtColor(img, cv.COLOR_BGR2HSV)
+def hsvColorFilter(img, hue_range: list, saturation: list, value: list):
+    '''Takes an image, filters it by some colour [hue_min, hue_max] and saturation [min, max], value (all ints 0-255)'''
+    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV) # Convert BGR to HSV
 
-    # Split the HSV channels
-    hue_channel, saturation_channel, value_channel = cv.split(hsv_image)
+    # define colour range in HSV
+    lower_blue = np.array([hue_range[0],saturation[0],value[0]])
+    upper_blue = np.array([hue_range[1],saturation[1],value[1]])
 
-    # Normalize the hue range from [0, 1] to [0, 180] for OpenCV's HSV range
-    hue_min = int(hue_range[0] * 180)
-    hue_max = int(hue_range[1] * 180)
-
-    # Create the mask for the color range
-    colour_mask = (hue_channel >= hue_min) & (hue_channel <= hue_max) & \
-                  (saturation_channel >= saturation * 255) & (value_channel >= value * 255)
-
-    # Set pixels outside the mask to black
-    filtered_img = np.copy(img)
-    filtered_img[~colour_mask] = 0
+    # Threshold the HSV image to get only blue colors
+    mask = cv.inRange(hsv, lower_blue, upper_blue)
+    filtered_img = cv.bitwise_and(img,img, mask= mask) # Bitwise-AND mask and original image
 
     return filtered_img
 
 
 if __name__ == "__main__":
     # Usage example:
-    img = cv.imread('images/001.jpg')
+    img = cv.imread('images/training_data/001.jpg')
 
     cropped_img = cropToCircle(img)
-    cv.imwrite('out/progress/cropped_image.jpg', cropped_img)
+    # cv.imwrite('out/progress/cropped_image2.jpg', cropped_img)
 
     colourRangeAqua = ([172/255, 182/255], statistics.mean([31,33,39,26, 42])/255, statistics.mean([79,79,73, 74,76])/255)
     lacunaFilteredOne = hsvColorFilterTupple(img, colourRangeAqua)
-    cv.imwrite('out/progress/hsv_image_aqua.jpg', lacunaFilteredOne)
+    # cv.imwrite('out/progress/hsv_image_aqua.jpg', lacunaFilteredOne)
+
