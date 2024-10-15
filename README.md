@@ -67,9 +67,6 @@ gantt
     title Lacuna Solver Tasks
     dateFormat  YYYY-MM-DD
 
-    %% done (aka grey color) is Elena,
-    %% blue defualt is talita
-
     section Admin
     Proposal       :milestone, proposal, 2024-10-18, 1d
     Demo           :milestone, demo, 2024-10-28, 1d
@@ -77,17 +74,17 @@ gantt
     Meeting         :milestone, meet,   2024-10-24, 1d
 
     section ImageProcessing
-    Circle Croping           :done, circle, 2024-10-08, 5d
+    Circle Croping           :circle, 2024-10-08, 5d
     Color Manipulation     :color, after circle  , 7d
-    Template Matching     :done, template, after circle  , 7d
+    Template Matching     :template, after circle  , 7d
 
-    Compare Image Proscessing Results :done, compare, after color template , 2d
+    Compare Image Proscessing Results :compare, after color template , 2d
 
     Live Camera Intergration :after demo, 5d
 
     section OptimisingGame
-    Simulate Game class      :simGame, 2024-10-10  , 3d
-    Generating Valid Moves      :genMoves, after simGame, 4d
+    Simulate Game class      :done: simGame, 2024-10-10  , 3d
+    Generating Valid Moves      :done: genMoves, after simGame, 4d
     Optimise Move     :optimise, after genMoves, 6d
 
 
