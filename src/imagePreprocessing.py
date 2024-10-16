@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import statistics
+import colorManipulation as color
 
 def cropToCircle(img):
     '''Given an image of Lacuna, return the image masked to only show the inside play circle'''
@@ -29,25 +30,6 @@ def cropToCircle(img):
     
     return croppedImg
 
-def hsvColorFilterTupple(img, colorStats: tuple):
-    hue_range, saturation, value = colorStats
-    return hsvColorFilter(img, hue_range, saturation, value)
-
-def hsvColorFilter(img, hue_range: list, saturation: list, value: list):
-    '''Takes an image, filters it by some colour [hue_min, hue_max] and saturation [min, max], value (all ints 0-255)'''
-    hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV) # Convert BGR to HSV
-
-    # define colour range in HSV
-    lower_blue = np.array([hue_range[0],saturation[0],value[0]])
-    upper_blue = np.array([hue_range[1],saturation[1],value[1]])
-
-    # Threshold the HSV image to get only blue colors
-    mask = cv.inRange(hsv, lower_blue, upper_blue)
-    filtered_img = cv.bitwise_and(img,img, mask= mask) # Bitwise-AND mask and original image
-
-    return filtered_img
-
-
 if __name__ == "__main__":
     # Usage example:
     img = cv.imread('images/training_data/001.jpg')
@@ -56,6 +38,6 @@ if __name__ == "__main__":
     # cv.imwrite('out/progress/cropped_image2.jpg', cropped_img)
 
     colourRangeAqua = ([172/255, 182/255], statistics.mean([31,33,39,26, 42])/255, statistics.mean([79,79,73, 74,76])/255)
-    lacunaFilteredOne = hsvColorFilterTupple(img, colourRangeAqua)
+    lacunaFilteredOne = color.hsvColorFilterTupple(img, colourRangeAqua)
     # cv.imwrite('out/progress/hsv_image_aqua.jpg', lacunaFilteredOne)
 
