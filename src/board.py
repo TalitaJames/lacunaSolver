@@ -95,10 +95,9 @@ class Board:
             c = (y1-m*x1)
 
             print(f"checking edge {edge} at ({x1},{y1}), ({x2},{y2})")
-            for node, attribute in self.tokenGraph.nodes().items():            #TODO implement "is collinear"
+            for node, attribute in self.tokenGraph.nodes().items():            #TODO speed up
                 (xn,yn) = attribute['pos']
                 # print(f"checking edge {edge} at ({x1},{y1}) and ({x2},{y2}) compared to node ({xn},{yn})")
-
                 if node in edge:
                     print(f"skipped self")
                     continue
