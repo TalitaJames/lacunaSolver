@@ -1,30 +1,16 @@
 import cv2 as cv
 import numpy as np
 import colorManipulation as color
+import time
 
 
-def cropToCircle(img):
-    '''Given an image of Lacuna, return the image masked to only show the inside play circle'''
-    colourRangeAqua = ([110, 130], [50, 100], [0,255])
+def cropToCircle(img, circle=None):
+    if circle is None:
+        circle = findCircle(img)
+        if circle is None: # If a circle wasn't found, don't crop the image
+            return None
 
-    imgAquaCircle = color.hsvColorFilterTupple(img, colourRangeAqua)
-    imgGray = cv.cvtColor(imgAquaCircle, cv.COLOR_BGR2GRAY)
-    _,imgBW = cv.threshold(imgGray, 50,255,cv.THRESH_BINARY)
-
-    circles = cv.HoughCircles(imgBW, cv.HOUGH_GRADIENT, 1.2, 750)
-    circles = np.squeeze(circles).astype(int)
-
-    # get the (x,y) center of image
-    centerY, centerX = img.shape[:2] # height, width
-    centerX = int(centerX/2)
-    centerY = int(centerY/2)
-
-    distance_toCenter = np.sqrt((circles[:, 0] - centerX) ** 2 + (circles[:, 1] - centerY) ** 2) # find distance from each circle to img center
-    closest_index = np.argmin(distance_toCenter) # Find the index of the circle closest to center of img
-
-    # Draw the circle on a mask (filled circle)
-    x, y, r = circles[closest_index] # best circle
-
+    x, y, r = circle
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
     cv.circle(mask, (x,y), r, (255), thickness=-1)
 
@@ -32,6 +18,39 @@ def cropToCircle(img):
 
     return masked_img
 
+
+def findCircle(img) -> tuple:
+    '''Given an image of Lacuna, return the image masked to only show the inside play circle'''
+    colourRangeAqua = ([110, 130], [50, 100], [0,255])
+
+    kernel = np.ones((5,5),np.float32)/25
+    blured = cv.filter2D(img,-1,kernel)
+
+    imgAquaCircle = color.hsvColorFilterTupple(blured, colourRangeAqua)
+    imgGray = cv.cvtColor(imgAquaCircle, cv.COLOR_BGR2GRAY)
+    _,imgBW = cv.threshold(imgGray, 50,255,cv.THRESH_BINARY)
+
+    circles = cv.HoughCircles(imgBW, cv.HOUGH_GRADIENT, 1.2, 750)
+
+    if circles is None:
+        return None
+
+    # circles = np.squeeze(circles).astype(int)
+    circles = np.reshape(circles, newshape=(1,3))
+    circles = circles.astype(int)
+
+    if len(circles) == 1: #Only one circle found, it must be the best
+        closest_index = 0
+    else:
+        # get the (x,y) center of image
+        centerY, centerX = img.shape[:2] # height, width
+        centerX = int(centerX/2)
+        centerY = int(centerY/2)
+        distance_toCenter = np.sqrt((circles[:, 0] - centerX) ** 2 + (circles[:, 1] - centerY) ** 2) # find distance from each circle to img center
+        closest_index = np.argmin(distance_toCenter) # Find the index of the circle closest to center of img
+
+    bestCircle = circles[closest_index] # best circle
+    return bestCircle
 
 
 
