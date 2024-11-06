@@ -1,5 +1,5 @@
 # Folders:
-out/logs/*
+out/*
 images/training_data/*
 
 # Byte-compiled / optimized / DLL files
