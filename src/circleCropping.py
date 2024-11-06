@@ -50,7 +50,7 @@ def findCircle(img) -> tuple:
         closest_index = np.argmin(distance_toCenter) # Find the index of the circle closest to center of img
 
     bestCircle = circles[closest_index] # best circle
-    return bestCircle
+    return bestCircle.tolist()
 
 
 

@@ -3,7 +3,6 @@ import numpy as np
 import sys
 import circleCropping as circle
 import colorManipulation as color
-import notebookCompanion
 import time
 import statistics
 
