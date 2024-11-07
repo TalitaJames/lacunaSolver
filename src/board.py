@@ -59,10 +59,10 @@ class Board:
         # user data
         self.userMoves = userMoves
         self.userPieces = np.zeros((2, self.tokenCount))
-    
+
     # Interact with the game
     def placeUserToken(self):
-        '''Add one of the users pieces, 
+        '''Add one of the users pieces,
         remove the two colinear tokens and give them to the user.'''
         pass
 
@@ -114,7 +114,7 @@ class Board:
 
 
     def calculateWinner(self) -> int:
-        '''return the game winner, either player 1 or 2. 
+        '''return the game winner, either player 1 or 2.
             Negative value if not finished'''
         pass
 
@@ -132,7 +132,7 @@ class Board:
         # # Add tokens
         # for t in self.tokenList:
         #     plt.plot(t[0], t[1], color=getColor(t[2]), marker='x')
-        
+
         # boardCircle = plt.Circle((0, 0), self.radius, color='k', fill=False, linewidth=1, linestyle='-' )
         # plt.gca().add_patch(boardCircle)
 
@@ -142,7 +142,7 @@ class Board:
         # ax = plt.gca()
         # ax.set_xlim([-(self.radius+0.05), (self.radius+0.05)])
         # ax.set_ylim([-(self.radius+0.05), (self.radius+0.05)])
-        
+
         nx.draw(self.tokenGraph)  # networkx draw()
         plt.draw()  # pyplot draw()
         plt.show()
