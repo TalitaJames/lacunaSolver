@@ -45,7 +45,7 @@ def locateOneColor(img, color):
                 dx, dy = d
                 distance = math.sqrt((cx-dx)**2 + (cy-dy)**2)
 
-                if distance<15: # if not in the same clump
+                if distance<50: # if not in the same clump
                     tooClose = True
                     break # Don't have to check any more if one is too close
 
@@ -78,9 +78,5 @@ def locateAllColors(img):
         for x,y in colorXY:
             cv.circle(img, (x, y), 4, color[1], -1)
             print(f"\t({x},{y})")
-
-
-    # Display the image with marked centers (optional)
-    cv.imwrite(f"out/logs/COLOUR_CENTER_{time.strftime('%Y%m%d-%H%M%S',time.localtime())}.png",img)
 
     return img #TODO make this return list of colours instead
