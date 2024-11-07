@@ -23,11 +23,11 @@ import itertools
 def getColor(color):
     colorString = ""
     match color:
-        case 0: # Red
+        case 0: # Red/Orange
             colorString = "r"
         case 1: # Blue
             colorString = "b"
-        case 2: # Cyan
+        case 2: # Aqua/Cyan
             colorString = "c"
         case 3: # Yellow
             colorString = "#c99100"
