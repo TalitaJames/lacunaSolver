@@ -60,10 +60,8 @@ def findSquare(img):
 
     # Two pass dilate with horizontal and vertical kernel
     kernalSize = (3,3)
-    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernalSize)
-    dilate = cv2.dilate(thresh, horizontal_kernel, iterations=2)
-    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernalSize)
-    dilate = cv2.dilate(dilate, vertical_kernel, iterations=2)
+    structuringElement = cv2.getStructuringElement(cv2.MORPH_RECT, kernalSize)
+    dilate = cv2.dilate(thresh, structuringElement, iterations=2)
 
     # Find contours, filter using contour threshold area, and draw rectangle
     cnts,hierarchy = cv2.findContours(dilate, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)

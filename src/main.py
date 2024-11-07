@@ -25,7 +25,26 @@ def startup():
     '''
     pass
 
-def periodicly(frame, oldCircleCoords) -> tuple:
+def averageData(newData, oldData, size):
+    print(f"{type(newData)=}")
+
+    if newData is not None: # sometimes the data maybe none (ie not found)
+        oldData.append(newData)
+
+    if(len(oldData)==0): # haven't got any historical data yet
+        return newData, oldData
+
+    elif (len(oldData)>size): # number of previous data it cares about
+        oldData.pop()
+
+    # work out the average data
+    oldData_NP = np.array(oldData)
+    circleCoords = np.mean(oldData_NP, axis=0).astype(int).tolist()
+
+    return circleCoords, oldData
+
+
+def circleUpdate(frame, oldCircleCoords) -> tuple:
     '''
     take in current frame
     finds the new circle, then add it to the previous circle circle coordinates
@@ -34,23 +53,12 @@ def periodicly(frame, oldCircleCoords) -> tuple:
     '''
 
     newCircleCoords = circle.findCircle(frame)
-    if newCircleCoords is not None:
-        oldCircleCoords.append(newCircleCoords)
-
-    if(len(oldCircleCoords)==0): # haven't got any historical data yet
-        return (0,0,0), oldCircleCoords
-    elif (len(oldCircleCoords)>5): # number of previous data it cares about
-        oldCircleCoords.pop()
-
-    oldCircleCoords_NP = np.array(oldCircleCoords)
-    circleCoords = np.mean(oldCircleCoords_NP, axis=0).astype(int).tolist()
-
     # print(f"{newCircleCoords=}, {circleCoords=}", flush=True)
 
-    return circleCoords, oldCircleCoords
+    return averageData(newCircleCoords, oldCircleCoords, 5)
 
 
-def mainVideoLoop(videoFilename = "/dev/video4", live=True):
+def mainVideoLoop(videoFilename = "/dev/video4", save=True):
     timestamp = time.strftime("%Y%m%d-%H%M%S",time.localtime())
 
     #region init camera & openCV
@@ -70,7 +78,7 @@ def mainVideoLoop(videoFilename = "/dev/video4", live=True):
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 
-    if live:
+    if save:
         out = cv2.VideoWriter(f'out/logs/{timestamp}.mp4', fourcc, frame_fps, (frame_width, frame_height))
 
     cv2.namedWindow("Normal", cv2.WINDOW_NORMAL)
@@ -89,12 +97,12 @@ def mainVideoLoop(videoFilename = "/dev/video4", live=True):
         ret, frame = cam.read()
 
         if i%300 == 0 and i>50:
-            circleCoords, historicalCircleCoords = periodicly(frame, historicalCircleCoords)
+            circleCoords, historicalCircleCoords = circleUpdate(frame, historicalCircleCoords)
             print(f"{i}, {circleCoords=}", flush=True)
 
         circleFrame = circle.cropToCircle(frame, circleCoords)
         colourFrame = color.locateAllColors(circleFrame)
-        if live: #if the footage is new save it
+        if save: #if the footage is new save it
             out.write(frame) # Save the camera footage
 
         # Display the captured frame
@@ -116,4 +124,6 @@ def mainVideoLoop(videoFilename = "/dev/video4", live=True):
 
 
 if __name__ == "__main__":
-    mainVideoLoop(videoFilename="out/logs/20241107-154335.mp4")
+    # mainVideoLoop(videoFilename="out/logs/20241107-154335.mp4", save=False)
+    mainVideoLoop(videoFilename="out/logs/20241107-164358.mp4", save=False)
+    # mainVideoLoop()

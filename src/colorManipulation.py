@@ -26,7 +26,14 @@ def locateOneColor(img, color):
 
     colorFilterFrame = hsvColorFilterTupple(img, color)
     imgGS = cv.cvtColor(colorFilterFrame, cv.COLOR_BGR2GRAY)
-    _, imgBW = cv.threshold(imgGS,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+    blurred = cv.GaussianBlur(imgGS, (15, 15), 0)
+    _, imgBW = cv.threshold(blurred,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
+
+    kernalSize = (5,5)
+    structuringElement = cv.getStructuringElement(cv.MORPH_RECT, kernalSize)
+    dilate = cv.dilate(imgBW, structuringElement, iterations=2)
+
+    return dilate
 
     # Find contours of the white regions
     contours, _ = cv.findContours(imgBW, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -45,7 +52,7 @@ def locateOneColor(img, color):
                 dx, dy = d
                 distance = math.sqrt((cx-dx)**2 + (cy-dy)**2)
 
-                if distance<50: # if not in the same clump
+                if distance<75: # if not in the same clump
                     tooClose = True
                     break # Don't have to check any more if one is too close
 
