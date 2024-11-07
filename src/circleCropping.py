@@ -52,6 +52,49 @@ def findCircle(img) -> tuple:
     bestCircle = circles[closest_index] # best circle
     return bestCircle.tolist()
 
+def findSquare(img):
+    # Load image, grayscale, Gaussian blur, Otsu's threshold
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (13,13), 0)
+    thresh = cv2.threshold(blur, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+
+    # Two pass dilate with horizontal and vertical kernel
+    kernalSize = (3,3)
+    horizontal_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernalSize)
+    dilate = cv2.dilate(thresh, horizontal_kernel, iterations=2)
+    vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, kernalSize)
+    dilate = cv2.dilate(dilate, vertical_kernel, iterations=2)
+
+    # Find contours, filter using contour threshold area, and draw rectangle
+    cnts,hierarchy = cv2.findContours(dilate, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    print(f"{cnts=}, {hierarchy=}")
+
+    # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+    cv2.drawContours(img, cnts, -1, (0,255,0), 3)
+    return dilate
+    # for c in cnts:
+    #     area = cv2.contourArea(c)
+    #     if area > 20:
+    #         x,y,w,h = cv2.boundingRect(c)
+    #         cv2.rectangle(img, (x, y), (x + w, y + h), (36, 255, 12), 3)
+
+
+    # gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # imagem = (255-gray)
+    # ret,thresh = cv2.threshold(imagem,120,200,1)
+    # contours,h = cv2.findContours(thresh,1,2)
+    # print(f"{len(contours)=}")
+
+    # for cnt in contours:
+    #     approx = cv2.approxPolyDP(cnt,0.01*cv2.arcLength(cnt,True),True)
+    #     # print (len(approx))
+    #     print(f"{cnt=}, {approx=}")
+    #     if len(approx)==4:
+    #         cv2.drawContours(img,[cnt],0,(0,0,255))
+    #     pass
+
+    return img
 
 
 def cropToBlob(img):
