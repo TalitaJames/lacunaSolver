@@ -1,4 +1,4 @@
-import cv2 as cv
+import cv2
 import numpy as np
 import colorManipulation as color
 import time
@@ -12,9 +12,9 @@ def cropToCircle(img, circle=None):
 
     x, y, r = circle
     mask = np.zeros((img.shape[0], img.shape[1]), dtype=np.uint8)
-    cv.circle(mask, (x,y), r, (255), thickness=-1)
+    cv2.circle(mask, (x,y), r, (255), thickness=-1)
 
-    masked_img = cv.bitwise_and(img, img, mask=mask)
+    masked_img = cv2.bitwise_and(img, img, mask=mask)
 
     return masked_img
 
@@ -24,19 +24,19 @@ def findCircle(img) -> tuple:
     colourRangeAqua = ([110, 130], [50, 100], [0,255])
 
     kernel = np.ones((5,5),np.float32)/25
-    blured = cv.filter2D(img,-1,kernel)
+    blured = cv2.filter2D(img,-1,kernel)
 
     imgAquaCircle = color.hsvColorFilterTupple(blured, colourRangeAqua)
-    imgGray = cv.cvtColor(imgAquaCircle, cv.COLOR_BGR2GRAY)
-    _,imgBW = cv.threshold(imgGray, 50,255,cv.THRESH_BINARY)
+    imgGray = cv2.cvtColor(imgAquaCircle, cv2.COLOR_BGR2GRAY)
+    _,imgBW = cv2.threshold(imgGray, 50,255,cv2.THRESH_BINARY)
 
-    circles = cv.HoughCircles(imgBW, cv.HOUGH_GRADIENT, 1.2, 750)
+    circles = cv2.HoughCircles(imgBW, cv2.HOUGH_GRADIENT, 1.2, 750)
 
     if circles is None:
         return None
 
     # circles = np.squeeze(circles).astype(int)
-    circles = np.reshape(circles, newshape=(1,3))
+    circles = np.reshape(circles, newshape=(circles.shape[1],3))
     circles = circles.astype(int)
 
     if len(circles) == 1: #Only one circle found, it must be the best
@@ -57,26 +57,26 @@ def findCircle(img) -> tuple:
 def cropToBlob(img):
     '''Given an image of Lacuna, return the image masked to only show the inside play circle'''
     # Convert the image to grayscale
-    imgGS = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+    imgGS = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Binarize the grayscale image with a threshold of 0.5 (128 in OpenCV scale)
-    _, imgBW = cv.threshold(imgGS, 128, 255, cv.THRESH_BINARY)
+    _, imgBW = cv2.threshold(imgGS, 128, 255, cv2.THRESH_BINARY)
 
     # Structuring element (disk-shaped) for morphological closing
-    structureElement = cv.getStructuringElement(cv.MORPH_ELLIPSE, (200, 200))  # Approx. 'disk' in MATLAB
-    closedImg = cv.morphologyEx(imgBW, cv.MORPH_CLOSE, structureElement)
+    structureElement = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (200, 200))  # Approx. 'disk' in MATLAB
+    closedImg = cv2.morphologyEx(imgBW, cv2.MORPH_CLOSE, structureElement)
 
     # Find connected components and retain the largest blob
-    num_labels, labels_im = cv.connectedComponents(closedImg)
+    num_labels, labels_im = cv2.connectedComponents(closedImg)
     sizes = np.bincount(labels_im.ravel())
 
     # The second largest component corresponds to the largest blob (ignore background)
     largest_blob_label = np.argmax(sizes[1:]) + 1
     largest_blob = np.uint8(labels_im == largest_blob_label) * 255 # if in the largest blob, go black
-    largest_blob_inverse = cv.bitwise_not(largest_blob)
+    largest_blob_inverse = cv2.bitwise_not(largest_blob)
 
     # Apply the mask to the original image
     croppedImg = np.copy(img)
-    croppedImg = cv.bitwise_and(croppedImg, croppedImg, mask=largest_blob_inverse)
+    croppedImg = cv2.bitwise_and(croppedImg, croppedImg, mask=largest_blob_inverse)
 
     return croppedImg

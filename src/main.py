@@ -23,7 +23,6 @@ def startup():
     open camera ect
     find first circle
     '''
-    
     pass
 
 def periodicly(frame, oldCircleCoords) -> tuple:
@@ -34,39 +33,42 @@ def periodicly(frame, oldCircleCoords) -> tuple:
     '''
 
     newCircleCoords = circle.findCircle(frame)
-    if newCircleCoords is None:
-        print("old")
-        circleCoords = oldCircleCoords
-    elif(sum(oldCircleCoords) == 0): # if the old circle hasn't been "properly" initialized
-        circleCoords = newCircleCoords
-    else:
-        print("new check")
-        oldX, oldY, oldR = oldCircleCoords
-        newX, newY, newR = newCircleCoords
-        avgX = statistics.mean([oldX,newX])
-        avgY = statistics.mean([oldY,newY])
-        avgR = statistics.mean([oldR,newR])
-        circleCoords = (avgX, avgY, avgR)
+    if newCircleCoords is not None:
+        oldCircleCoords.append(newCircleCoords)
 
-    print(f"{oldCircleCoords=}, {newCircleCoords=}, {circleCoords=}", flush=True)
+    if(len(oldCircleCoords)==0): # haven't got any historical data yet
+        return (0,0,0), oldCircleCoords
+    elif (len(oldCircleCoords)>25): # number of previous data it cares about
+        oldCircleCoords.pop()
 
-    return circleCoords
+    oldCircleCoords_NP = np.array(oldCircleCoords)
+    circleCoords = np.mean(oldCircleCoords_NP, axis=0).astype(int).tolist()
 
+    # print(f"{newCircleCoords=}, {circleCoords=}", flush=True)
+    circleCoords[2] +=15
 
-if __name__ == "__main__":
+    return circleCoords, oldCircleCoords
+
+def mainVideoLoop(videoFilename = "/dev/video4"):
     timestamp = time.strftime("%Y%m%d-%H%M%S",time.localtime())
-    
-    # Open the default camera
-    cam = cv2.VideoCapture("/dev/video4")
+
+    #region init camera & openCV
+    cam = cv2.VideoCapture(videoFilename)
     assert cam.isOpened(), "cannot open camera"
 
-    # Get the default frame width and height
+    # Set the camera width and height
+    cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
+    cam.set(cv2.CAP_PROP_FRAME_HEIGHT,1080)
+    cam.set(cv2.CAP_PROP_FPS, 20)
+
     frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_fps = int(cam.get(cv2.CAP_PROP_FPS))
+    print(f"{frame_width=}, {frame_height=}, {frame_fps=}")
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(f'out/logs/{timestamp}.mp4', fourcc, 20.0, (frame_width, frame_height))
+    out = cv2.VideoWriter(f'out/logs/{timestamp}.mp4', fourcc, frame_fps, (frame_width, frame_height))
 
 
     cv2.namedWindow("Normal", cv2.WINDOW_NORMAL)
@@ -77,27 +79,29 @@ if __name__ == "__main__":
 
     cv2.namedWindow("Colour", cv2.WINDOW_NORMAL)
     cv2.resizeWindow("Colour", 800, 650)
-    
+    # endregion init camera & openCV
+
     i = 1
     circleCoords = (0,0,0)
+    historicalCircleCoords = []
 
     startup()
     while True:
         ret, frame = cam.read()
 
-        colourFrame = color.hsvColorFilterTupple(frame, colorTupplePurple)
-        if i%30 == 0 and i>100:
-            circleCoords = periodicly(frame, circleCoords)
+        if i%10 == 0 and i>50:
+            circleCoords, historicalCircleCoords = periodicly(frame, historicalCircleCoords)
 
         circleFrame = circle.cropToCircle(frame, circleCoords)
-        cv2.imshow("Circle", circleFrame)
-
-        # Write the frame to the output file
-        out.write(frame)
+        # colourFrame = color.hsvColorFilterTupple(circleFrame, colorTuppleOrange)
+        colourFrame = color.locateAllColors(circleFrame)
+        out.write(frame) # Save the camera footage
 
         # Display the captured frame
         cv2.imshow("Normal", frame)
+        cv2.imshow("Circle", circleFrame)
         cv2.imshow("Colour", colourFrame)
+        # cv2.imwrite(f"out/logs/CIRCLE_{time.strftime('%Y%m%d-%H%M%S',time.localtime())}.png",circleFrame)
 
         # Press "q" to exit the loop
         if cv2.waitKey(1) == ord('q'):
@@ -110,3 +114,10 @@ if __name__ == "__main__":
     cam.release()
     out.release()
     cv2.destroyAllWindows()
+
+
+if __name__ == "__main__":
+    mainVideoLoop()
+
+    # img = cv2.imread("out/logs/CIRCLE_20241104-155642.png")
+    # color.locateAllColors(img)
