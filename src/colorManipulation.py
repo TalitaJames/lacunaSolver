@@ -63,23 +63,41 @@ def locateAllColors(img):
     '''given a frame, find the position of all lacuna tiles'''
 
     #region colors
-    #Colour in the form [(Hue minMax, saturation minMax, value minMax), (Blue, Green, Red)]
-    colorTuppleOrange = [([7,10], [100,255],[200, 255]),    (  0, 123, 255)]
-    colorTupplePink =   [([7,10], [0,100],[0, 255]),        (236,  16, 234)] #WIP
-    colorTuppleAqua =   [([85,95], [100,225],[175, 255]),   (222, 236,  16)]
-    colorTupplePurple = [([140,170], [0,75],[150, 255]),    (246,  18, 160)]
-    colorTuppleBlue =   [([100,120], [150,225],[170, 255]), (246,  18, 160)]
-    colorTuppleBrown =  [([15,30], [100,225],[0, 255]),     ( 18, 246,  93)] #gets yellow, and gold user
-    colorTuppleYellow = [([10,20], [140,190],[230, 255]),   ( 18, 246, 213)] #gets yellow, and gold user #gets yellow, and gold user (but cleaner)
+    #Color in the form (Hue minMax, saturation minMax, value minMax)
+    colorTuppleOrange = ([7,10], [100,255],[200, 255])
+    colorTuppleBlue =   ([100,120], [150,225],[170, 255])
+    colorTuppleAqua =   ([85,95], [100,225],[175, 255])
+    colorTuppleYellow = ([10,20], [140,190],[230, 255]) #gets yellow, and gold user #gets yellow, and gold user (but cleaner)
+    colorTuppleBrown =  ([15,30], [100,225],[0, 255]) #gets yellow, and gold user
+    colorTupplePink =   ([7,10], [0,100],[0, 255]) #WIP
+    colorTupplePurple = ([140,170], [0,75],[150, 255])
 
-    # allColors = [colorTuppleOrange, colorTupplePink, colorTuppleAqua, colorTupplePurple, colorTuppleBlue, colorTuppleBrown, colorTuppleYellow]
+    # allColors = [colorTuppleOrange, colorTuppleBlue, colorTuppleAqua, colorTuppleYellow, colorTuppleBrown, colorTupplePink, colorTupplePurple]
     allColors = [colorTuppleOrange, colorTupplePurple]
     #endregion colors
     # return locateOneColor(img, allColors[0][0]);
 
     allColorPositions = []
     for color in allColors:
-        colorXY = locateOneColor(img, color[0]);
+        colorXY = locateOneColor(img, color);
         allColorPositions.append(colorXY)
 
     return allColorPositions
+
+def convertColorListToDict(colorList):
+    '''given a list [[color], [(x,y), (x,y), ... (x,y)] ... [color]]
+    convert the data into the format used by the Board class,
+    ie: (id, {nodeData})
+    where {nodeData} is {"pos": (x,y), "type": i}
+        pos is the x,y position of the token
+        type is an int (0-6 inclusive) that represents the color
+    '''
+
+    colorGraphData = []
+    i = 0 # an itterator to ID each node
+    for colorID, colorData in enumerate(colorList):
+        for token in colorData:
+            tokenInfo = {"pos" : token, "type": colorID}
+            colorGraphData.append((i, tokenInfo))
+
+    return colorGraphData
