@@ -30,10 +30,8 @@ def locateOneColor(img, color):
     _, imgBW = cv.threshold(blurred,0,255,cv.THRESH_BINARY+cv.THRESH_OTSU)
 
     kernalSize = (5,5)
-    structuringElement = cv.getStructuringElement(cv.MORPH_RECT, kernalSize)
+    structuringElement = cv.getStructuringElement(cv.MORPH_RECT, kernalSize) #or: MORPH_ELLIPSE
     dilate = cv.dilate(imgBW, structuringElement, iterations=2)
-
-    return dilate
 
     # Find contours of the white regions
     contours, _ = cv.findContours(imgBW, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
@@ -75,15 +73,13 @@ def locateAllColors(img):
     colorTuppleYellow = [([10,20], [140,190],[230, 255]),   ( 18, 246, 213)] #gets yellow, and gold user #gets yellow, and gold user (but cleaner)
 
     # allColors = [colorTuppleOrange, colorTupplePink, colorTuppleAqua, colorTupplePurple, colorTuppleBlue, colorTuppleBrown, colorTuppleYellow]
-    allColors = [colorTupplePink]
+    allColors = [colorTuppleOrange, colorTupplePurple]
     #endregion colors
+    # return locateOneColor(img, allColors[0][0]);
 
+    allColorPositions = []
     for color in allColors:
         colorXY = locateOneColor(img, color[0]);
-        print(f"\n{color=} (has {len(colorXY)})", flush=True)
+        allColorPositions.append(colorXY)
 
-        for x,y in colorXY:
-            cv.circle(img, (x, y), 4, color[1], -1)
-            print(f"\t({x},{y})")
-
-    return img #TODO make this return list of colours instead
+    return allColorPositions
