@@ -42,7 +42,6 @@ def getColor(color):
 
     return colorString
 
-
 class Board:
     def __init__(self, tokenList, userMoves = None, radius = 0.5):
         '''Create a board'''

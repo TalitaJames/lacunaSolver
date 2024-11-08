@@ -25,8 +25,9 @@ def startup():
     '''
     pass
 
-def averageData(newData, oldData, size):
-    print(f"{type(newData)=}")
+def averageDataList(newData, oldData, size=5):
+    '''adds a new peice of data to the range
+    data is averaged based on size (int) of previous data'''
 
     if newData is not None: # sometimes the data maybe none (ie not found)
         oldData.append(newData)
@@ -39,10 +40,46 @@ def averageData(newData, oldData, size):
 
     # work out the average data
     oldData_NP = np.array(oldData)
-    circleCoords = np.mean(oldData_NP, axis=0).astype(int).tolist()
+    averagedResult = np.mean(oldData_NP, axis=0).astype(int).tolist()
 
-    return circleCoords, oldData
+    return averagedResult, oldData
 
+def averageDataNumpy(newData, oldData, size=5):
+    '''adds a new peice of data to the range
+    data is averaged based on size (int) of previous data'''
+
+    if newData is not None: # sometimes the data maybe none (ie not found)
+        oldData = np.vstack([oldData, newData])
+
+    if(len(oldData)==0): # haven't got any historical data yet
+        return newData, oldData
+
+    elif (len(oldData)>size): # number of previous data it cares about
+        oldData = np.delete(oldData, 0, axis=0)
+
+    # work out the average data
+    oldData_NP = np.array(oldData)
+    averagedResult = np.mean(oldData_NP, axis=0).astype(int)
+
+    print(f"\t{averagedResult.shape}, {oldData.shape}")
+    return averagedResult, oldData
+
+
+def colorUpdate(frame, historicalTokenData):
+
+    tokenData = color.locateAllColors(frame)
+    averagedTokenData = tokenData.copy()
+
+    for i in range(tokenData.shape[0]): # colour counter
+        for j in range(tokenData.shape[1]): # each token
+            print(f"({i},{j})\t{tokenData[i][j].shape}, {historicalTokenData[i][j].shape}")
+
+            dataNew, historicalUpdate = averageDataNumpy(tokenData[i][j],historicalTokenData[i][j])
+
+            averagedTokenData[i][j]=dataNew
+            historicalTokenData[i][j]=historicalUpdate
+
+    return averagedTokenData, historicalTokenData
 
 def circleUpdate(frame, oldCircleCoords) -> tuple:
     '''
@@ -55,7 +92,7 @@ def circleUpdate(frame, oldCircleCoords) -> tuple:
     newCircleCoords = circle.findCircle(frame)
     # print(f"{newCircleCoords=}, {circleCoords=}", flush=True)
 
-    return averageData(newCircleCoords, oldCircleCoords, 5)
+    return averageDataList(newCircleCoords, oldCircleCoords)
 
 
 def mainVideoLoop(videoFilename = "/dev/video4", save=True):
@@ -73,7 +110,7 @@ def mainVideoLoop(videoFilename = "/dev/video4", save=True):
     frame_width = int(cam.get(cv2.CAP_PROP_FRAME_WIDTH))
     frame_height = int(cam.get(cv2.CAP_PROP_FRAME_HEIGHT))
     frame_fps = int(cam.get(cv2.CAP_PROP_FPS))
-    print(f"{frame_width=}, {frame_height=}, {frame_fps=}")
+    print(f"Setup Camera, details: {frame_width=}, {frame_height=}, {frame_fps=}")
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
@@ -88,33 +125,43 @@ def mainVideoLoop(videoFilename = "/dev/video4", save=True):
     cv2.resizeWindow("Circle", 800, 650)
     # endregion init camera & openCV
 
-    i = 1
+    loopIterator = 1
     circleCoords = (616,310, 300) #initial circle estimate
-    historicalCircleCoords = []
+    historicalCircleCoords = [] # colour ID, then token ID, then avg data
 
-    startup()
+    colorNum = 7
+    historicalTokenCoords = np.empty((7,7,5,2))
+    tokenCoords =  np.empty((7,7,2))
+
+    #region camera loop
     while True:
         ret, frame = cam.read()
-
-        if i%300 == 0 and i>50:
-            circleCoords, historicalCircleCoords = circleUpdate(frame, historicalCircleCoords)
-            print(f"{i}, {circleCoords=}", flush=True)
-
-        circleFrame = circle.cropToCircle(frame, circleCoords)
-        colourFrame = color.locateAllColors(circleFrame)
         if save: #if the footage is new save it
             out.write(frame) # Save the camera footage
 
+        # Get the positions of the tokens
+        circleFrame = circle.cropToCircle(frame, circleCoords)
+        colorFrame = color.plotAllColors(circleFrame, tokenCoords)
+
+        if loopIterator%100 == 0 and loopIterator>100:
+            circleCoords, historicalCircleCoords = circleUpdate(frame, historicalCircleCoords)
+            tokenCoords, historicalTokenCoords = colorUpdate(frame, historicalTokenCoords)
+
+            print(f"{loopIterator}, {circleCoords=}", flush=True)
+
+        color.convertColorListToDict(tokenCoords)
+
         # Display the captured frame
         cv2.imshow("Normal", frame)
-        cv2.imshow("Circle", colourFrame)
+        cv2.imshow("Circle", colorFrame)
         # cv2.imwrite(f"out/logs/CIRCLE_{time.strftime('%Y%m%d-%H%M%S',time.localtime())}.png",circleFrame)
 
         # Press "q" to exit the loop
         if cv2.waitKey(1) == ord('q'):
             break
 
-        i+=1
+        loopIterator+=1
+        # input(loopIterator)
 
     # Release the capture and writer objects[694, 294, 210]
 

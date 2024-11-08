@@ -36,7 +36,6 @@ def locateOneColor(img, color):
     # Find contours of the white regions
     contours, _ = cv.findContours(imgBW, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     centers = [] # List of each (x,y) point
-
     for contour in contours: # Through each contour, find the centroid
         tooClose = False # if the point is "too close" to another, it is deemed to be the same point and is ignored
 
@@ -55,9 +54,24 @@ def locateOneColor(img, color):
                     break # Don't have to check any more if one is too close
 
             if not tooClose:
-                centers.append((cx, cy))
+                centers.append([cx, cy])
 
-    return centers
+    if not centers: # centers array is empty, no points found
+        centersNP = np.empty((7,2))
+        centersNP[:] = np.nan
+        return centersNP
+    centersNP = np.asarray(sorted(centers)).astype(int) #sorted so same values are in same pos
+
+    #ensure 7x2 shape
+    if centersNP.shape[0] > 7: # Trim to the first 7 rows if there are more than 7
+        centersNP = centersNP[:7, :]
+    elif centersNP.shape[0] < 7: # Less than 7, add nan values to make 7x2 shape
+        padding = np.full((7 - centersNP.shape[0], 2), np.nan)
+        centersNP = np.vstack([centersNP, padding])
+
+    # print(f"{centersNP=}")
+    # centersNP = centersNP.astype(int)
+    return centersNP
 
 def locateAllColors(img):
     '''given a frame, find the position of all lacuna tiles'''
@@ -72,17 +86,51 @@ def locateAllColors(img):
     colorTupplePink =   ([7,10], [0,100],[0, 255]) #WIP
     colorTupplePurple = ([140,170], [0,75],[150, 255])
 
-    # allColors = [colorTuppleOrange, colorTuppleBlue, colorTuppleAqua, colorTuppleYellow, colorTuppleBrown, colorTupplePink, colorTupplePurple]
-    allColors = [colorTuppleOrange, colorTupplePurple]
+    allColors = [colorTuppleOrange, colorTuppleBlue, colorTuppleAqua, colorTuppleYellow, colorTuppleBrown, colorTupplePink, colorTupplePurple]
     #endregion colors
     # return locateOneColor(img, allColors[0][0]);
 
-    allColorPositions = []
-    for color in allColors:
+    allColorPositions = np.empty((7,7,2))
+
+    for i, color in enumerate(allColors):
         colorXY = locateOneColor(img, color);
-        allColorPositions.append(colorXY)
+        allColorPositions[i] = colorXY
 
     return allColorPositions
+
+#given an int, return a BGR colour
+def getColor(color):
+    colorBGR = ""
+    match color:
+        case 0: # Red/Orange
+            colorBGR = (  0, 123, 255)
+        case 1: # Blue
+            colorBGR = (236,  16, 234)
+        case 2: # Aqua/Cyan
+            colorBGR = (222, 236,  16)
+        case 3: # Yellow
+            colorBGR = (246,  18, 160)
+        case 4: # Brown/green
+            colorBGR = (246, 118, 160)
+        case 5: # Pink
+            colorBGR = ( 18, 246,  93)
+        case 6: # Purple
+            colorBGR = ( 18, 246, 213)
+        case _: #Unknown (Black)
+            colorBGR = (  0,  0,   0)
+
+    return colorBGR
+
+
+def plotAllColors(img, allColors):
+    for i, color in enumerate(allColors):
+        for x,y in color:
+            print(f"{x},{y}")
+
+            if (not np.isnan(x) and not np.isnan(y)) and x>0 and y>0:
+                cv.circle(img, (int(x),int(y)), 9, getColor(i), -1)
+
+    return img
 
 def convertColorListToDict(colorList):
     '''given a list [[color], [(x,y), (x,y), ... (x,y)] ... [color]]
@@ -98,6 +146,6 @@ def convertColorListToDict(colorList):
     for colorID, colorData in enumerate(colorList):
         for token in colorData:
             tokenInfo = {"pos" : token, "type": colorID}
-            colorGraphData.append((i, tokenInfo))
+            colorGraphData.append((i, tuple(tokenInfo)))
 
     return colorGraphData

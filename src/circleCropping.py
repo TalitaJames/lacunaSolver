@@ -65,7 +65,7 @@ def findSquare(img):
 
     # Find contours, filter using contour threshold area, and draw rectangle
     cnts,hierarchy = cv2.findContours(dilate, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-    print(f"{cnts=}, {hierarchy=}")
+    # print(f"{cnts=}, {hierarchy=}")
 
     # cnts = cnts[0] if len(cnts) == 2 else cnts[1]
     cv2.drawContours(img, cnts, -1, (0,255,0), 3)
